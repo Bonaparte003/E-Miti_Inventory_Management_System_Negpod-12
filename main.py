@@ -185,3 +185,81 @@ class InventorySystem:
 
         # Update the main widget with the columns
         self.main.original_widget = columns
+
+    def handle_menu_action(self, username, action):
+        if action == "add":
+            self.add_item_form(username)
+        elif action == "update":
+            self.update_item_form(username)
+        elif action == "delete":
+            self.delete_item_form(username)
+
+    def add_item_form(self, username):
+        body = [urwid.Text("Add Item"), urwid.Divider()]
+        name_edit = urwid.Edit("Item Name: ")
+        quantity_edit = urwid.Edit("Quantity: ")
+        price_edit = urwid.Edit("Price: ")
+        Code_edit = urwid.Edit("Code: ")
+        expiry_date_edit = urwid.Edit("Expiry Date: ")
+        add_button = urwid.Button("Add")
+        urwid.connect_signal(add_button, "click", self.add_item_action, (username, name_edit, quantity_edit, price_edit, Code_edit, expiry_date_edit))
+
+        body.extend([name_edit, quantity_edit, price_edit, Code_edit, expiry_date_edit, urwid.AttrMap(add_button, None, focus_map="reversed")])
+        self.main.original_widget = urwid.ListBox(urwid.SimpleFocusListWalker(body))
+
+    def add_item_action(self, button: urwid.Button, edits: typing.Tuple[str, urwid.Edit, urwid.Edit, urwid.Edit, urwid.Edit, urwid.Edit]) -> None:
+        username = edits[0]
+        name = edits[1].edit_text
+        quantity = edits[2].edit_text
+        price = edits[3].edit_text
+        Code = edits[4].edit_text
+        expiry_date = edits[5].edit_text
+
+        try:
+            quantity = int(quantity)
+            price = float(price)
+            if add_item(username, name, quantity, price, Code, expiry_date):
+                response = urwid.Text(("success", "Item added successfully\n"))
+            else:
+                response = urwid.Text(("error", "Failed to add item\n"))
+        except ValueError:
+            response = urwid.Text(("error", "Invalid input. Quantity must be an integer and price must be a float\n"))
+
+        done = urwid.Button("Ok")
+        urwid.connect_signal(done, "click", lambda button: self.inventory_menu(username))
+        self.main.original_widget = urwid.Filler(urwid.Pile([response, urwid.AttrMap(done, None, focus_map="reversed")]))
+
+    def update_item_form(self, username: str) -> urwid.Widget:
+        body = [urwid.Text("Update Item"), urwid.Divider()]
+        name_edit = urwid.Edit("Item Name: ")
+        quantity_edit = urwid.Edit("New Quantity: ")
+        price_edit = urwid.Edit("New Price: ")
+        Code_edit = urwid.Edit("New Code: ")
+        expiry_date_edit = urwid.Edit("New Expiry Date: ")
+
+        update_button = urwid.Button("Update Item")
+        urwid.connect_signal(update_button, "click", self.update_item_action, (username, name_edit, quantity_edit, price_edit, Code_edit, expiry_date_edit))
+
+        body.extend([name_edit, quantity_edit, price_edit, Code_edit, expiry_date_edit, urwid.AttrMap(update_button, None, focus_map="reversed")])
+        self.main.original_widget = urwid.ListBox(urwid.SimpleFocusListWalker(body))
+
+    def update_item_action(self, button: urwid.Button, edits: typing.Tuple[str, urwid.Edit, urwid.Edit, urwid.Edit, urwid.Edit, urwid.Edit]) -> None:
+        username = edits[0]
+        name = edits[1].edit_text
+        quantity = edits[2].edit_text
+        price = edits[3].edit_text
+        Code = edits[4].edit_text
+        expiry_date = edits[5].edit_text
+        try:
+            quantity = int(quantity)
+            price = float(price)
+            if update_item(username, name, quantity, price, Code, expiry_date):
+                response = urwid.Text(("success", "Item updated successfully\n"))
+            else:
+                response = urwid.Text(("error", "Item does not exist\n"))
+        except ValueError:
+            response = urwid.Text(("error", "Invalid input. Quantity must be an integer and price must be a float\n"))
+
+        done = urwid.Button("Ok")
+        urwid.connect_signal(done, "click", lambda button: self.inventory_menu(username))
+        self.main.original_widget = urwid.Filler(urwid.Pile([response, urwid.AttrMap(done, None, focus_map="reversed")]))
