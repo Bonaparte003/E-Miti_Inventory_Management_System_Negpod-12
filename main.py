@@ -106,3 +106,23 @@ class InventorySystem:
         done = urwid.Button("Ok")
         urwid.connect_signal(done, "click", lambda button: self.main_menu())
         self.main.original_widget = urwid.Filler(urwid.Pile([response, urwid.AttrMap(done, None, focus_map="reversed")]))
+
+    def login_form(self):
+        body = [urwid.Text("Login"), urwid.Divider()]
+        username_edit = urwid.Edit("Username: ")
+        password_edit = urwid.Edit("Password: ", mask="*")
+        login_button = urwid.Button("Login")
+        urwid.connect_signal(login_button, "click", self.login_action, (username_edit, password_edit))
+        body.extend([username_edit, password_edit, urwid.AttrMap(login_button, None, focus_map="reversed")])
+        return urwid.ListBox(urwid.SimpleFocusListWalker(body))
+
+    def login_action(self, button, edits):
+        username = edits[0].edit_text
+        password = edits[1].edit_text
+        if authenticate_user(username, password):
+            self.inventory_menu(username)
+        else:
+            response = urwid.Text(("error", "Login failed\n"))
+            done = urwid.Button("Ok")
+            urwid.connect_signal(done, "click", self.main_menu)
+            self.main.original_widget = urwid.Filler(urwid.Pile([response, urwid.AttrMap(done, None, focus_map="reversed")]))
