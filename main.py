@@ -263,3 +263,33 @@ class InventorySystem:
         done = urwid.Button("Ok")
         urwid.connect_signal(done, "click", lambda button: self.inventory_menu(username))
         self.main.original_widget = urwid.Filler(urwid.Pile([response, urwid.AttrMap(done, None, focus_map="reversed")]))
+
+    def delete_item_form(self, username):
+        body = [urwid.Text("Delete Item"), urwid.Divider()]
+        id_edit = urwid.Edit("Item ID: ")
+
+        delete_button = urwid.Button("Delete Item")
+        urwid.connect_signal(delete_button, "click", self.delete_item_action, (username, id_edit))
+
+        body.extend([id_edit, urwid.AttrMap(delete_button, None, focus_map="reversed")])
+        self.main.original_widget = urwid.ListBox(urwid.SimpleFocusListWalker(body))
+
+    def delete_item_action(self, button: urwid.Button, edits: typing.Tuple[str, urwid.Edit]) -> None:
+        username = edits[0]
+        name = edits[1].edit_text
+        if delete_item(username, name):
+            response = urwid.Text(("success", "Item deleted successfully\n"))
+        else:
+            response = urwid.Text(("error", "Item does not exist\n"))
+
+        done = urwid.Button("Ok")
+        urwid.connect_signal(done, "click", lambda button: self.inventory_menu(username))
+        self.main.original_widget = urwid.Filler(urwid.Pile([response, urwid.AttrMap(done, None, focus_map="reversed")]))
+
+    def exit_program(self, button):
+        raise urwid.ExitMainLoop()
+
+if _name_ == "_main_":
+    system = InventorySystem()
+    system.main_menu()
+    urwid.MainLoop(system.top, palette).run()
