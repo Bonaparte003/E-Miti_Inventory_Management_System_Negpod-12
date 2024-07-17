@@ -126,3 +126,62 @@ class InventorySystem:
             done = urwid.Button("Ok")
             urwid.connect_signal(done, "click", self.main_menu)
             self.main.original_widget = urwid.Filler(urwid.Pile([response, urwid.AttrMap(done, None, focus_map="reversed")]))
+    def inventory_menu(self, username):
+        tasks_content = [
+            ("header", " ID   NAME           EXPIRY_DATE   PRICE     QUANTITY           CODE      "),
+        ]
+        inventory = get_inventory(username)
+
+        # Find the maximum width for each column
+        max_widths = [len(col) for col in tasks_content[0][1].split()]
+
+        for item_list in inventory.values():
+            for item in item_list:
+                # Update max widths based on current item
+                max_widths[0] = max(max_widths[0], len(str(item['id'])) + len("ID"))
+                max_widths[1] = max(max_widths[1], len(item['name']) + len("NAME"))
+                max_widths[2] = max(max_widths[2], len(item['expiry_date']) + len("EXPIRY_DATE"))
+                max_widths[3] = max(max_widths[3], len(str(item['price'])) + len("PRICE"))
+                max_widths[4] = max(max_widths[4], len(str(item['quantity'])) + len("QUANTITY"))
+                max_widths[5] = max(max_widths[5], len(str(item['Code'])) + len("CODE"))
+
+        # Adjust tasks_content with dynamically calculated column widths
+        tasks_content[0] = ("header", f" ID{' '(max_widths[0]-2)} NAME{' '(max_widths[1]-4)} EXPIRY_DATE{' '(max_widths[2]-11)} PRICE{' '(max_widths[3]-6)} QUANTITY{' '(max_widths[4]-8)} CODE{' '(max_widths[5]-4)}")
+
+        for item_list in inventory.values():
+            for item in item_list:
+                if item['expiry_date'] < datetime.now().strftime('%Y-%m-%d %H:%M:%S'):
+                    tasks_content.append(("expired", f" {item['id']}{' '(max_widths[0]-len(str(item['id'])))} {item['name']}{' '(max_widths[1]-len(item['name']))} {item['expiry_date']}{' '(max_widths[2]-len(item['expiry_date']))} {item['price']}{' '(max_widths[3]-len(str(item['price'])))} {item['quantity']}{' '(max_widths[4]-len(str(item['quantity'])))} {item['Code']}{' '(max_widths[5]-len(str(item['Code'])))}"))
+                else:
+                    tasks_content.append(("body", f" {item['id']}{' '(max_widths[0]-len(str(item['id'])))} {item['name']}{' '(max_widths[1]-len(item['name']))} {item['expiry_date']}{' '(max_widths[2]-len(item['expiry_date']))} {item['price']}{' '(max_widths[3]-len(str(item['price'])))} {item['quantity']}{' '(max_widths[4]-len(str(item['quantity'])))} {item['Code']}{' '(max_widths[5]-len(str(item['Code'])))}"))
+
+        # Create widgets with adjusted content
+        tasks_list = urwid.SimpleListWalker([urwid.AttrMap(urwid.Text(item[1]), item[0]) for item in tasks_content])
+
+        # Create buttons for the menu options on the right side
+        menu_items = [
+            urwid.Text(f"=========== Welcome back, {username} ==========="),
+            urwid.Text(""),
+            urwid.Button("Add Item", on_press=lambda button: self.handle_menu_action(username, "add")),
+            urwid.Button("Update Item", on_press=lambda button: self.handle_menu_action(username, "update")),
+            urwid.Button("Delete Item", on_press=lambda button: self.handle_menu_action(username, "delete")),
+            urwid.Button("Logout", on_press=lambda button: self.main_menu())
+        ]
+
+        # Style the buttons
+        menu_items = [urwid.AttrMap(item, "button", focus_map="button_focus") for item in menu_items]
+
+        # Wrap the menu items in a ListBox
+        menu_items_listbox = urwid.ListBox(urwid.SimpleFocusListWalker(menu_items))
+
+        # Add padding around the menu items
+        menu_items_with_padding = urwid.Padding(menu_items_listbox, left=2, right=2)
+
+        # Create the columns
+        columns = urwid.Columns([
+            urwid.LineBox(urwid.ListBox(tasks_list), title="Inventory List"),
+            urwid.LineBox(menu_items_with_padding, title="Menu"),
+        ])
+
+        # Update the main widget with the columns
+        self.main.original_widget = columns
