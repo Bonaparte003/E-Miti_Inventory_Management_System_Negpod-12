@@ -1,6 +1,9 @@
 #!/usr/bin/python3
 import urwid
 import typing
+from auth import register_user, authenticate_user
+from inventory import get_inventory, add_item, update_item, delete_item
+from datetime import datetime
 
 # Define the palette for the UI colors
 palette = [
@@ -66,7 +69,6 @@ class InventorySystem:
         elif choice == "Exit":
             self.exit_program(button)
 
-    # Registration - Didier 
     def register_form(self):
         body = [urwid.Text("Register"), urwid.Divider()]
         username_edit = urwid.Edit("Username: ")
@@ -126,6 +128,7 @@ class InventorySystem:
             done = urwid.Button("Ok")
             urwid.connect_signal(done, "click", self.main_menu)
             self.main.original_widget = urwid.Filler(urwid.Pile([response, urwid.AttrMap(done, None, focus_map="reversed")]))
+        
     def inventory_menu(self, username):
         tasks_content = [
             ("header", " ID   NAME           EXPIRY_DATE   PRICE     QUANTITY           CODE      "),
@@ -146,14 +149,14 @@ class InventorySystem:
                 max_widths[5] = max(max_widths[5], len(str(item['Code'])) + len("CODE"))
 
         # Adjust tasks_content with dynamically calculated column widths
-        tasks_content[0] = ("header", f" ID{' '(max_widths[0]-2)} NAME{' '(max_widths[1]-4)} EXPIRY_DATE{' '(max_widths[2]-11)} PRICE{' '(max_widths[3]-6)} QUANTITY{' '(max_widths[4]-8)} CODE{' '(max_widths[5]-4)}")
+        tasks_content[0] = ("header", f" ID{' '*(max_widths[0]-2)} NAME{' '*(max_widths[1]-4)} EXPIRY_DATE{' '*(max_widths[2]-11)} PRICE{' '*(max_widths[3]-6)} QUANTITY{' '*(max_widths[4]-8)} CODE{' '*(max_widths[5]-4)}")
 
         for item_list in inventory.values():
             for item in item_list:
                 if item['expiry_date'] < datetime.now().strftime('%Y-%m-%d %H:%M:%S'):
-                    tasks_content.append(("expired", f" {item['id']}{' '(max_widths[0]-len(str(item['id'])))} {item['name']}{' '(max_widths[1]-len(item['name']))} {item['expiry_date']}{' '(max_widths[2]-len(item['expiry_date']))} {item['price']}{' '(max_widths[3]-len(str(item['price'])))} {item['quantity']}{' '(max_widths[4]-len(str(item['quantity'])))} {item['Code']}{' '(max_widths[5]-len(str(item['Code'])))}"))
+                    tasks_content.append(("expired", f" {item['id']}{' '*(max_widths[0]-len(str(item['id'])))} {item['name']}{' '*(max_widths[1]-len(item['name']))} {item['expiry_date']}{' '*(max_widths[2]-len(item['expiry_date']))} {item['price']}{' '*(max_widths[3]-len(str(item['price'])))} {item['quantity']}{' '*(max_widths[4]-len(str(item['quantity'])))} {item['Code']}{' '*(max_widths[5]-len(str(item['Code'])))}"))
                 else:
-                    tasks_content.append(("body", f" {item['id']}{' '(max_widths[0]-len(str(item['id'])))} {item['name']}{' '(max_widths[1]-len(item['name']))} {item['expiry_date']}{' '(max_widths[2]-len(item['expiry_date']))} {item['price']}{' '(max_widths[3]-len(str(item['price'])))} {item['quantity']}{' '(max_widths[4]-len(str(item['quantity'])))} {item['Code']}{' '(max_widths[5]-len(str(item['Code'])))}"))
+                    tasks_content.append(("body", f" {item['id']}{' '*(max_widths[0]-len(str(item['id'])))} {item['name']}{' '*(max_widths[1]-len(item['name']))} {item['expiry_date']}{' '*(max_widths[2]-len(item['expiry_date']))} {item['price']}{' '*(max_widths[3]-len(str(item['price'])))} {item['quantity']}{' '*(max_widths[4]-len(str(item['quantity'])))} {item['Code']}{' '*(max_widths[5]-len(str(item['Code'])))}"))
 
         # Create widgets with adjusted content
         tasks_list = urwid.SimpleListWalker([urwid.AttrMap(urwid.Text(item[1]), item[0]) for item in tasks_content])
@@ -259,7 +262,7 @@ class InventorySystem:
                 response = urwid.Text(("error", "Item does not exist\n"))
         except ValueError:
             response = urwid.Text(("error", "Invalid input. Quantity must be an integer and price must be a float\n"))
-
+    
         done = urwid.Button("Ok")
         urwid.connect_signal(done, "click", lambda button: self.inventory_menu(username))
         self.main.original_widget = urwid.Filler(urwid.Pile([response, urwid.AttrMap(done, None, focus_map="reversed")]))
@@ -273,7 +276,7 @@ class InventorySystem:
 
         body.extend([id_edit, urwid.AttrMap(delete_button, None, focus_map="reversed")])
         self.main.original_widget = urwid.ListBox(urwid.SimpleFocusListWalker(body))
-
+    
     def delete_item_action(self, button: urwid.Button, edits: typing.Tuple[str, urwid.Edit]) -> None:
         username = edits[0]
         name = edits[1].edit_text
@@ -285,11 +288,11 @@ class InventorySystem:
         done = urwid.Button("Ok")
         urwid.connect_signal(done, "click", lambda button: self.inventory_menu(username))
         self.main.original_widget = urwid.Filler(urwid.Pile([response, urwid.AttrMap(done, None, focus_map="reversed")]))
-
+    
     def exit_program(self, button):
         raise urwid.ExitMainLoop()
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     system = InventorySystem()
     system.main_menu()
-    urwid.MainLoop(system.top, palette).run()
+    urwid.MainLoop(system.top, palette).run()
