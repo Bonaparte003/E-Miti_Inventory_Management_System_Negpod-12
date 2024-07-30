@@ -9,10 +9,10 @@ from datetime import datetime
 import os
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
+
 load_dotenv()
 
-# Filter warnings
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 palette = [
@@ -89,7 +89,7 @@ class InventorySystemUI:
         password_edit = urwid.Edit("Password: ", mask="*")
 
         role_group = []
-        roles = ["Admin", "Pharmacist", "Inventory Manager", "Hospital"]
+        roles = ["Pharmacist", "Hospital"]
         role_options = [urwid.RadioButton(role_group, role) for role in roles]
         
         register_button = urwid.Button("Register")
